@@ -1,14 +1,21 @@
-# from mrjob.job import MRJob
+from mrjob.job import MRJob
 
-# class MRHotelRaitingCount(MRJob):
-#     def mapper(self, _, line):
-#         (HName, HStar, HRooms, UCountry, NrReviews, rating, StayPeriod, TType, Pool, Gym, TCourt, Spa, Casino, Internet, UContinent, ReviewMonth, ReviewDay) = line.split("\t")
-#         result = [rating, 1]
-#         yield result
+class MRAverageRating(MRJob):
 
-#     def reducer(self, key, value):
-#         result = [key, sum(value)]
-#         yield result
+    def mapper(self, _, line):
+        if line.startswith("userId"):
+            return
+        userId, movieId, rating, timestamp = line.split(',')
+        
+        yield movieId, (float(rating), 1)
 
-# if __name__ == '__main__':
-#     MRHotelRaitingCount.run()
+    def reducer(self, key, values):
+        total_rating = 0
+        total_count = 0
+        for rating, count in values:
+            total_rating += rating
+            total_count += count
+        yield key, total_rating / total_count
+
+if __name__ == '__main__':
+    MRAverageRating.run()
